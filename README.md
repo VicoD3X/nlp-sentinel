@@ -14,6 +14,13 @@ Air Paradis Sentiment Monitor est un MVP NLP/MLOps de classification de sentimen
 
 Le projet ne prétend pas être un système NLP industriel. Il montre une chaîne complète et compréhensible : expérimentation, artefact modèle, inférence API, démonstration utilisateur, monitoring et feedback.
 
+## Aperçu visuel
+
+<p>
+  <img src="docs/screenshots/streamlit-local-monitoring.png" alt="Interface Streamlit" width="49%">
+  <img src="docs/screenshots/streamlit-local-feedback.png" alt="Feedback utilisateur enregistré" width="49%">
+</p>
+
 ## Objectif métier
 
 L'objectif est d'aider une équipe produit à détecter rapidement si un tweet exprime un sentiment positif ou négatif, puis à collecter des signaux de correction lorsque l'utilisateur juge la prédiction incorrecte.
@@ -95,6 +102,8 @@ Azure App Insights reste disponible en option si `APPLICATIONINSIGHTS_CONNECTION
 Les logs contiennent le type d'événement, la prédiction, le label, la probabilité si disponible, la longueur du tweet et un aperçu tronqué du texte.
 
 Le tweet brut complet n'est pas envoyé dans les dimensions de monitoring.
+
+![Capture du feedback local JSONL](docs/screenshots/local-monitoring-feedback-jsonl.png)
 
 ## Boucle de feedback utilisateur
 
