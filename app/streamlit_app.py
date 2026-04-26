@@ -12,7 +12,7 @@ from opencensus.ext.azure.log_exporter import AzureLogHandler
 # => Version idempotente : évite l’empilement de handlers à chaque rerun Streamlit
 @st.cache_resource
 def get_logger():
-    log = logging.getLogger("airparadis.streamlit")
+    log = logging.getLogger("nlp_sentinel.streamlit")
     log.setLevel(logging.INFO)
     log.propagate = False  # évite la remontée vers le root logger (double logs)
     _conn = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")  # Heroku Config Var
@@ -53,7 +53,7 @@ def log_predict_api(tweet_text: str, y_pred: int, y_proba: float | None = None):
 # -----------------------
 # App Streamlit
 # -----------------------
-st.set_page_config(page_title="Analyse de sentiment - Air Paradis", page_icon="✈️")
+st.set_page_config(page_title="NLP Sentinel - Analyse de sentiment", page_icon="🔎")
 
 @st.cache_resource
 def load_model():
@@ -64,7 +64,7 @@ def load_model():
 
 model = load_model()
 
-st.title("Analyse de sentiment - Air Paradis")
+st.title("NLP Sentinel - Analyse de sentiment")
 
 tweet = st.text_area("Saisissez un tweet", height=120, placeholder="Exemple : Flight delayed again...")
 
