@@ -1,15 +1,17 @@
-# === Environnements virtuels ===
+# === Environnements Python / dépendances locales ===
+.venv/
+venv/
+env/
+ENV/
 occ-env/
 .occ-env/
-env/
-venv/
-.venv/
 
 # === Variables d'environnement ===
 .env
 
-# === Données locales (non versionnées) ===
-data/
+# === Données locales non versionnées ===
+data/*
+!data/README.md
 data_raw/
 data_processed/
 
@@ -26,26 +28,27 @@ __pycache__/
 mlruns/
 mlartifacts/
 
-# === Dossiers générés par Jupyter ===
+# === Jupyter ===
 .ipynb_checkpoints/
 
-# === Logs & fichiers temporaires ===
+# === Logs et fichiers temporaires ===
 logs/
 *.log
 tmp/
 temp/
 
-# === Modèles & poids lourds ===
-# Ignorer tous les modèles volumineux (BERT, Word2Vec, etc.)
-models/
-# Réautoriser explicitement les modèles légers que tu veux garder
+# === Modèles et poids lourds ===
+models/*
 !models/tfidf_vectorizer.pkl
+!models/README.md
 
-# === Divers ===
-.DS_Store
-Thumbs.db
-
-
-# Ignorer les présentations PowerPoint
+# === Présentations locales non suivies ===
 *.pptx
 *.ppt
+!docs/archive/project-presentation.pptx
+
+# === Systèmes / éditeurs ===
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

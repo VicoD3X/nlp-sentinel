@@ -1,4 +1,4 @@
-name: CI - NLP Sentinel
+name: CI - Air Paradis Sentiment Monitor
 
 on:
   push:
@@ -23,7 +23,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements-api.txt
+          pip install -r requirements-app.txt
+          pip install -r requirements-dev.txt
 
       - name: Run pytest
         env:

@@ -1,135 +1,112 @@
-# app/streamlit_app.py
-import os
-import logging
-from pathlib import Path
-import pickle
-import streamlit as st
-from opencensus.ext.azure.log_exporter import AzureLogHandler
+from __future__ import annotations
 
-# -----------------------
-# Azure App Insights (minimal)
-# -----------------------
-# => Version idempotente : évite l’empilement de handlers à chaque rerun Streamlit
+import streamlit as st
+
+from src.sentiment_monitor.config import get_config
+from src.sentiment_monitor.inference import load_model, predict_sentiment
+from src.sentiment_monitor.monitoring import (
+    get_monitoring_logger,
+    log_bad_prediction,
+    log_prediction,
+)
+
+
+CONFIG = get_config()
+
+
+@st.cache_resource
+def get_model(model_path: str):
+    """Charge le modèle une seule fois par session Streamlit."""
+    return load_model(model_path)
+
+
 @st.cache_resource
 def get_logger():
-    log = logging.getLogger("nlp_sentinel.streamlit")
-    log.setLevel(logging.INFO)
-    log.propagate = False  # évite la remontée vers le root logger (double logs)
-    _conn = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")  # Heroku Config Var
-    if _conn and not any(isinstance(h, AzureLogHandler) for h in log.handlers):
-        handler = AzureLogHandler(connection_string=_conn)
-        handler.setLevel(logging.INFO)
-        log.addHandler(handler)
-    return log
-
-logger = get_logger()
+    """Configure le logger Azure App Insights si la variable est disponible."""
+    return get_monitoring_logger(CONFIG)
 
 
-def log_bad_pred(tweet_text: str, y_pred: int, y_proba: float | None = None):
-    """Envoie un log 'bad_pred' avec le tweet + la prédiction (+ proba si dispo)"""
-    dims = {
-        "kind": "bad_pred",
-        "source": "streamlit",
-        "tweet_text": tweet_text,
-        "prediction": int(y_pred),
-    }
-    if y_proba is not None:
-        dims["probability"] = float(y_proba)
-    logger.warning("bad_pred", extra={"custom_dimensions": dims})
+st.set_page_config(
+    page_title="Air Paradis Sentiment Monitor",
+    layout="centered",
+)
 
+st.title("Air Paradis Sentiment Monitor")
+st.caption("Démonstration NLP/MLOps : sentiment, monitoring et feedback utilisateur.")
 
-def log_predict_api(tweet_text: str, y_pred: int, y_proba: float | None = None):
-    """Envoie un log 'predict_api' pour chaque prédiction API"""
-    dims = {
-        "kind": "predict_api",
-        "source": "streamlit",
-        "tweet_text": tweet_text,
-        "prediction": int(y_pred),
-    }
-    if y_proba is not None:
-        dims["probability"] = float(y_proba)
-    logger.info("predict_api", extra={"custom_dimensions": dims})
+st.markdown(
+    """
+Cette interface illustre un flux MVP volontairement simple :
+saisir un tweet, prédire son sentiment, puis signaler une mauvaise prédiction.
 
-# -----------------------
-# App Streamlit
-# -----------------------
-st.set_page_config(page_title="NLP Sentinel - Analyse de sentiment", page_icon="🔎")
+Le modèle utilisé est une baseline TF-IDF / scikit-learn. Les logs de monitoring
+ne stockent qu'un aperçu tronqué du texte afin de limiter l'exposition des données.
+"""
+)
 
-@st.cache_resource
-def load_model():
-    model_path = Path("models/tfidf_vectorizer.pkl")
-    with open(model_path, "rb") as f:
-        model = pickle.load(f)
-    return model
+try:
+    model = get_model(str(CONFIG.model_path))
+    logger = get_logger()
+except Exception as exc:
+    st.error(f"Impossible de charger la démonstration : {exc}")
+    st.stop()
 
-model = load_model()
+tweet = st.text_area(
+    "Saisissez un tweet",
+    height=120,
+    placeholder="Exemple : Flight delayed again...",
+)
 
-st.title("NLP Sentinel - Analyse de sentiment")
-
-tweet = st.text_area("Saisissez un tweet", height=120, placeholder="Exemple : Flight delayed again...")
-
-# État pour pouvoir cliquer "Signaler" après "Prédire"
 if "last_tweet" not in st.session_state:
     st.session_state.last_tweet = None
 if "last_pred" not in st.session_state:
     st.session_state.last_pred = None
+if "last_label" not in st.session_state:
+    st.session_state.last_label = None
 if "last_proba" not in st.session_state:
     st.session_state.last_proba = None
 
 col1, col2 = st.columns(2)
+
 with col1:
     predict_clicked = st.button("Prédire", type="primary", key="btn_predict")
 
-# --- Prédiction ---
 if predict_clicked:
     if not tweet.strip():
         st.warning("Veuillez saisir un tweet.")
     else:
-        pred = int(model.predict([tweet])[0])
-        label = "Positif" if pred == 1 else "Négatif"
-
-        # ✅ Affichage simplifié pour la version production
-        st.success(f"Sentiment détecté : {label}")
-
-        proba_max = None
-        if hasattr(model, "predict_proba"):
-            proba = model.predict_proba([tweet])[0]
-            proba_max = float(max(proba[0], proba[1]))  # Conservée pour les logs, non affichée
-
-        # 🔁 Mémorisation pour le feedback utilisateur
-        st.session_state.last_tweet = tweet
-        st.session_state.last_pred = pred
-        st.session_state.last_proba = proba_max
-
-        # 🪵 Log automatique vers Azure Insights (événement "predict_api")
         try:
-            log_predict_api(tweet, pred, proba_max)
-        except Exception as e:
-            st.warning(f"Échec du log Azure Insights : {e}")
+            result = predict_sentiment(tweet, model=model)
+        except Exception as exc:
+            st.error(f"Erreur lors de la prédiction : {exc}")
+        else:
+            pred = int(result["class_id"])
+            label = str(result["label"])
+            proba = result["probability"]
 
-# --- Bouton "Signaler" rendu APRÈS la mise à jour de l'état ---
+            st.success(f"Sentiment détecté : {label}")
+
+            st.session_state.last_tweet = tweet
+            st.session_state.last_pred = pred
+            st.session_state.last_label = label
+            st.session_state.last_proba = proba
+
+            try:
+                log_prediction(tweet, pred, label, proba, logger=logger)
+            except Exception as exc:
+                st.warning(f"Échec du log Azure App Insights : {exc}")
+
 with col2:
     if st.session_state.last_pred is not None:
         if st.button("Signaler comme incorrect", key="btn_feedback"):
             try:
-                log_bad_pred(
+                log_bad_prediction(
                     st.session_state.last_tweet,
                     st.session_state.last_pred,
-                    st.session_state.last_proba
+                    st.session_state.last_label,
+                    st.session_state.last_proba,
+                    logger=logger,
                 )
                 st.success("Merci, votre signalement a été enregistré.")
-            except Exception as e:
-                st.error(f"Impossible d'envoyer le signalement: {e}")
-
-
-
-
-# =======================
-# COMMENT ACTIVER LE MODE DÉVELOPPEUR STREAMLIT
-# Dans le terminal, taper : .\.venv\Scripts\Activate
-# Puis : streamlit run app/streamlit_app.py
-# Pour forcer le rechargement automatique du script à chaque sauvegarde : tapper "R" dans le terminal
-# Pour forcer le rechargement du script (sans attendre la sauvegarde) : tapper "D" dans le terminal
-# Pour arrêter le serveur Streamlit : tapper "CTRL + C" dans le terminal
-# Pour plus d'info : https://docs.streamlit.io/library/get-started/installation
-# =======================
+            except Exception as exc:
+                st.error(f"Impossible d'envoyer le signalement : {exc}")
