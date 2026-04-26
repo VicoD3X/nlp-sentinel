@@ -10,7 +10,7 @@ Le projet illustre une chaîne complète :
 - artefact modèle scikit-learn ;
 - API FastAPI d'inférence ;
 - interface Streamlit ;
-- monitoring Azure App Insights ;
+- monitoring local maison avec option Azure App Insights ;
 - feedback utilisateur sur les mauvaises prédictions.
 
 ## Positionnement
@@ -21,6 +21,6 @@ Le dépôt reste volontairement simple. Il ne cherche pas à devenir une platefo
 
 1. L'utilisateur saisit un tweet dans Streamlit.
 2. Le modèle prédit un sentiment positif ou négatif.
-3. La prédiction peut être loggée dans Azure App Insights.
+3. La prédiction est loggée localement par défaut, ou dans Azure App Insights si ce backend est activé.
 4. L'utilisateur peut signaler une prédiction incorrecte.
 5. Ce signalement illustre une boucle de feedback MLOps légère.

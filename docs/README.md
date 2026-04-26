@@ -6,7 +6,7 @@ Ce dossier regroupe la documentation de synthèse du projet Air Paradis Sentimen
 
 - `project-summary.md` : résumé fonctionnel et technique.
 - `model-card.md` : description du modèle et de ses limites.
-- `monitoring.md` : fonctionnement Azure App Insights et feedback utilisateur.
+- `monitoring.md` : fonctionnement du monitoring local, option Azure et feedback utilisateur.
 - `deployment-notes.md` : notes de lancement local et traces de déploiement.
 - `archive/` : supports historiques conservés.
 - `screenshots/` : captures de monitoring, MLflow et versioning.

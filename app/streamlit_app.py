@@ -22,7 +22,7 @@ def get_model(model_path: str):
 
 @st.cache_resource
 def get_logger():
-    """Configure le logger Azure App Insights si la variable est disponible."""
+    """Configure le logger de monitoring local et/ou Azure."""
     return get_monitoring_logger(CONFIG)
 
 
@@ -94,7 +94,7 @@ if predict_clicked:
             try:
                 log_prediction(tweet, pred, label, proba, logger=logger)
             except Exception as exc:
-                st.warning(f"Échec du log Azure App Insights : {exc}")
+                st.warning(f"Échec du log de monitoring : {exc}")
 
 with col2:
     if st.session_state.last_pred is not None:

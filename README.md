@@ -5,11 +5,12 @@
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-TF--IDF-F7931E?logo=scikitlearn&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-demo-FF4B4B?logo=streamlit&logoColor=white)
+![Monitoring](https://img.shields.io/badge/Monitoring-local%20JSONL-0F766E)
 ![Status](https://img.shields.io/badge/Status-MVP-0F172A)
 
 ## Présentation du projet
 
-Air Paradis Sentiment Monitor est un MVP NLP/MLOps de classification de sentiment sur des tweets liés à une compagnie aérienne. Le dépôt relie un modèle baseline TF-IDF, une API FastAPI, une interface Streamlit, Azure App Insights et une boucle de feedback utilisateur pour signaler les mauvaises prédictions.
+Air Paradis Sentiment Monitor est un MVP NLP/MLOps de classification de sentiment sur des tweets liés à une compagnie aérienne. Le dépôt relie un modèle baseline TF-IDF, une API FastAPI, une interface Streamlit, un monitoring local maison avec option Azure App Insights et une boucle de feedback utilisateur pour signaler les mauvaises prédictions.
 
 Le projet ne prétend pas être un système NLP industriel. Il montre une chaîne complète et compréhensible : expérimentation, artefact modèle, inférence API, démonstration utilisateur, monitoring et feedback.
 
@@ -80,9 +81,18 @@ L'interface permet de :
 
 Le parcours utilisateur reste volontairement simple afin de mettre en avant le flux NLP/MLOps plutôt qu'une interface produit complète.
 
-## Monitoring Azure App Insights
+## Monitoring local et Azure App Insights
 
-Streamlit peut envoyer des événements vers Azure App Insights si `APPLICATIONINSIGHTS_CONNECTION_STRING` est configurée. Les logs contiennent le type d'événement, la prédiction, le label, la probabilité si disponible, la longueur du tweet et un aperçu tronqué du texte.
+Le monitoring local est activé par défaut. Les événements sont écrits au format JSON Lines dans `logs/monitoring_events.jsonl`. Cette variante locale permet de conserver la boucle de feedback sans dépendre d'Azure.
+
+Azure App Insights reste disponible en option si `APPLICATIONINSIGHTS_CONNECTION_STRING` est configurée. Le backend se pilote avec `MONITORING_BACKEND` :
+
+- `local` : fichier local JSONL, valeur par défaut ;
+- `azure` : export Azure uniquement ;
+- `both` : fichier local et Azure ;
+- `none` : monitoring désactivé.
+
+Les logs contiennent le type d'événement, la prédiction, le label, la probabilité si disponible, la longueur du tweet et un aperçu tronqué du texte.
 
 Le tweet brut complet n'est pas envoyé dans les dimensions de monitoring.
 
@@ -134,7 +144,11 @@ pip install -r requirements-app.txt
 streamlit run app/streamlit_app.py
 ```
 
-Azure App Insights est optionnel. Sans variable `APPLICATIONINSIGHTS_CONNECTION_STRING`, l'application fonctionne en local sans exporter de logs.
+Le monitoring local fonctionne sans configuration Azure. Pour écrire dans un autre fichier :
+
+```powershell
+$env:LOCAL_MONITORING_PATH="logs/sentiment_monitoring.jsonl"
+```
 
 ## Tests
 
@@ -159,14 +173,14 @@ Le notebook principal est conservé dans `notebooks/01_sentiment_analysis_modeli
 - Le modèle est une baseline TF-IDF, pas un modèle NLP avancé.
 - Les scores ne sont pas présentés comme un benchmark scientifique complet.
 - Le dataset complet n'est pas inclus.
-- Le monitoring reste illustratif et dépend d'une configuration Azure externe.
+- Le monitoring reste illustratif, même si la variante locale évite de dépendre d'une configuration Azure.
 - Le dépôt n'est pas une plateforme production-ready.
 
 ## Améliorations possibles
 
 - Ajouter une évaluation plus structurée du modèle dans la documentation.
 - Comparer plusieurs baselines légères sans alourdir l'application.
-- Ajouter un export local des feedbacks utilisateurs.
+- Exploiter les logs locaux de feedback pour préparer un futur jeu de réentraînement.
 - Définir une politique plus complète de réentraînement à partir des signalements.
 - Préparer une démonstration cloud si le coût et la maintenance sont justifiés.
 

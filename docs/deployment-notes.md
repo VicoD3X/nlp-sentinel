@@ -27,9 +27,11 @@ Un exemple de Procfile API est fourni dans `Procfile.api.example` :
 web: uvicorn api.main:app --host=0.0.0.0 --port=$PORT
 ```
 
-## Azure App Insights
+## Monitoring
 
-Le monitoring dépend de `APPLICATIONINSIGHTS_CONNECTION_STRING`. Il est optionnel pour le lancement local.
+Le monitoring local est activé par défaut et écrit les événements dans `logs/monitoring_events.jsonl`.
+
+Azure App Insights reste optionnel. Il dépend de `APPLICATIONINSIGHTS_CONNECTION_STRING` et peut être activé avec `MONITORING_BACKEND=azure` ou `MONITORING_BACKEND=both`.
 
 ## Limite de promesse
 
