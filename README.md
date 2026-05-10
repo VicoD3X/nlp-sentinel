@@ -195,4 +195,4 @@ Le notebook principal est conservé dans `notebooks/01_sentiment_analysis_modeli
 
 ## Contexte du projet
 
-Ce dépôt a été retravaillé comme projet portfolio NLP/MLOps. Il démontre la capacité à relier un modèle de machine learning, une API, une interface utilisateur, du monitoring et une boucle de feedback dans un MVP clair et maintenable.
+Ce dépôt démontre la capacité à relier un modèle de machine learning, une API, une interface utilisateur, du monitoring et une boucle de feedback dans un MVP NLP/MLOps clair et maintenable.
